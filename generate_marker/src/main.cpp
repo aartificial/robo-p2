@@ -7,19 +7,14 @@
 
 /*
     2.1 Realització del programa: generate_marker
-
     El programa generarà una única marca ArUco amb un marc d’1 bit d’amplada
     Caldrà passar-li 4 paràmetres:
-
     1. diccionari (alfanumèric)
     2. id de la marca dins el diccionari (numèric)
     3. mida en píxels de la marca (numèric)
     4. nom del fitxer de la imatge PNG de la marca ArUco (alfanumèric)
-
     Un exemple de crida per línia de comandes podria ser aquesta:
-
     build$ ./generate_marker DICT_ARUCO_ORIGINAL 25 200 marker.png
-
 */
 
 std::map<std::string, int> aruco_dict = {{
@@ -43,7 +38,7 @@ int main(int argc, char* argv[]) {
     int dictionaryIndex = aruco_dict[dictionary_name];
 
     cv::Mat markerImage;
-    cv::aruco::Dictionary dictionary = cv::aruco::getPredefinedDictionary(dictionaryIndex);
-    cv::aruco::generateImageMarker(dictionary, marker_id, marker_pixels, markerImage, 1);
+    const cv::Ptr<cv::aruco::Dictionary>& dictionary = cv::aruco::getPredefinedDictionary(dictionaryIndex);
+    cv::aruco::drawMarker(dictionary, marker_id, marker_pixels, markerImage, 1);
     cv::imwrite(filename, markerImage);
 }
