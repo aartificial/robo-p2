@@ -3,6 +3,7 @@
 #include "opencv2/core/core.hpp"
 #include "opencv2/imgproc.hpp"
 #include "opencv2/highgui.hpp"
+#include <opencv2/core/base.hpp>
 #include <map>
 
 /*
@@ -17,9 +18,29 @@
     build$ ./generate_marker DICT_ARUCO_ORIGINAL 25 200 marker.png
 */
 
-std::map<std::string, int> aruco_dict = {{
-      "DICT_6X6_250", 10
-}};
+std::map<std::string, int> aruco_dict = {
+{"DICT_4X4_50", 0},
+{"DICT_4X4_100", 1},
+{"DICT_4X4_250", 2},
+{"DICT_4X4_1000", 3},
+{"DICT_5X5_50", 4},
+{"DICT_5X5_100", 5},
+{"DICT_5X5_250", 6},
+{"DICT_5X5_1000", 7},
+{"DICT_6X6_50", 8},
+{"DICT_6X6_100", 9},
+{"DICT_6X6_250", 10},
+{"DICT_6X6_1000", 11},
+{"DICT_7X7_50", 12},
+{"DICT_7X7_100", 13},
+{"DICT_7X7_250", 14},
+{"DICT_7X7_1000", 15},
+{"DICT_ARUCO_ORIGINAL", 16},
+{"DICT_APRILTAG_16h5", 17},
+{"DICT_APRILTAG_25h9", 18},
+{"DICT_APRILTAG_36h10", 19},
+{"DICT_APRILTAG_36h11", 20}
+};
 
 int main(int argc, char* argv[]) {
     if (argc < 5){
@@ -38,7 +59,11 @@ int main(int argc, char* argv[]) {
     int dictionaryIndex = aruco_dict[dictionary_name];
 
     cv::Mat markerImage;
+    cv::Mat markerImage_b;
     const cv::Ptr<cv::aruco::Dictionary>& dictionary = cv::aruco::getPredefinedDictionary(dictionaryIndex);
     cv::aruco::drawMarker(dictionary, marker_id, marker_pixels, markerImage, 1);
-    cv::imwrite(filename, markerImage);
+    cv::Scalar value( 255,255,255);
+    int border = 20;
+     copyMakeBorder(markerImage, markerImage_b, border, border, border, border, cv::BORDER_CONSTANT,value);
+     cv::imwrite(filename, markerImage_b);
 }
