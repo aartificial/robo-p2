@@ -32,7 +32,7 @@ std::map<std::string, int> aruco_dict = {
 };
 
 int main(int argc, char* argv[]) {
-    if (argc < 5){
+    if (argc < 6){
         std::cerr << "Usage: ./generate_board <rows> <columns> <dictionary> <file>" << std::endl;
         std::cerr << "<rows>: " << argv[0] << " <dictionary_name source no.>" << std::endl;
         std::cerr << "<columns>: " << argv[0] << " <dictionary_name source no.>" << std::endl;
