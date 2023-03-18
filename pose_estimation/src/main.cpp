@@ -1,134 +1,158 @@
-#include "opencv2/core/core.hpp"
-#include "opencv2/imgproc.hpp"
-#include "opencv2/highgui.hpp"
-#include "opencv2/imgcodecs.hpp"
 #include <iostream>
-#include <iomanip>
+#include <opencv2/core/cvstd.hpp>
+#include <opencv2/videoio.hpp>
+#include <opencv2/aruco/dictionary.hpp>
 #include <opencv2/aruco.hpp>
-#include <opencv2/core.hpp>
-#include <iostream>
-#include <opencv2/calib3d.hpp>
-#include <vector>
-#include <algorithm>
-using namespace cv;
-using namespace std;
+#include <opencv2/highgui.hpp>
+#include <iomanip>
+#include <opencv2/imgproc.hpp>
+#include <map>
 
-static bool readCameraParameters(string filename, Mat & camMatrix, Mat & distCoeffs) {
-	FileStorage fs(filename, FileStorage::READ);
-	if (!fs.isOpened())
-		return false;
-	fs["camera_matrix"] >> camMatrix;
-	fs["distortion_coefficients"] >> distCoeffs;
-	return true;
+/**
+ * @brief Command line parser keys
+ */
+const cv::String &keys =
+    "{name     |      | Dictionary name in OpenCV predefined dictionaries }"
+    "{length   |      | Marker side length (in meters). Real world size }"
+    "{id       |      | Marker id }";
+
+/**
+ * @brief Dictionary of aruco markers
+ */
+std::map<std::string, int> aruco_dict = {
+        {"DICT_4X4_50", 0},
+        {"DICT_4X4_100", 1},
+        {"DICT_4X4_250", 2},
+        {"DICT_4X4_1000", 3},
+        {"DICT_5X5_50", 4},
+        {"DICT_5X5_100", 5},
+        {"DICT_5X5_250", 6},
+        {"DICT_5X5_1000", 7},
+        {"DICT_6X6_50", 8},
+        {"DICT_6X6_100", 9},
+        {"DICT_6X6_250", 10},
+        {"DICT_6X6_1000", 11},
+        {"DICT_7X7_50", 12},
+        {"DICT_7X7_100", 13},
+        {"DICT_7X7_250", 14},
+        {"DICT_7X7_1000", 15},
+        {"DICT_ARUCO_ORIGINAL", 16},
+        {"DICT_APRILTAG_16h5", 17},
+        {"DICT_APRILTAG_25h9", 18},
+        {"DICT_APRILTAG_36h10", 19},
+        {"DICT_APRILTAG_36h11", 20}
+};
+
+/**
+ * @brief Draw axis on image
+ * @param imageCopy
+ * @param axis
+ * @param tvecs
+ */
+void draw_info(const cv::Mat &imageCopy, std::ostringstream &axis, const std::vector<cv::Vec3d> &tvecs);
+
+/**
+ * @brief Main function
+ * @param argc
+ * @param argv
+ */
+int main(int argc, char **argv) {
+    // parse command line arguments
+    cv::CommandLineParser parser(argc, argv, keys);
+
+    if (argc < 3) {
+        parser.printMessage();
+        return -1;
+    }
+
+    std::cout << "name: " << parser.get<std::string>("name") << std::endl;
+    std::cout << "id: " << parser.get<int>("id") << std::endl;
+    std::cout << "length: " << parser.get<float>("length") << std::endl;
+
+    cv::String dictionaryName = parser.get<cv::String>("name");
+    int markerId = parser.get<int>("id");
+    float length = parser.get<float>("length");
+    int waitTime = 10;
+    int dictionaryId = aruco_dict[dictionaryName];
+
+    if (length <= 0) {
+        std::cerr << "Invalid marker length" << std::endl;
+        return -1;
+    }
+
+    // open video file or capturing device
+    cv::VideoCapture input;
+    input.open(0);
+
+    if (!input.isOpened()) {
+        std::cerr << "Could not open video" << std::endl;
+        return -1;
+    }
+
+    cv::Mat image, imageCopy;
+    cv::Mat cameraMatrix, distCoeffs;
+    std::ostringstream axis;
+
+    // create aruco dictionary
+    cv::Ptr<cv::aruco::Dictionary> dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::PREDEFINED_DICTIONARY_NAME(dictionaryId));
+
+    // read camera parameters
+    cv::FileStorage fs("fitxerCalibracio.yaml", cv::FileStorage::READ);
+    fs["camera_matrix"] >> cameraMatrix;
+    fs["distortion_coefficients"] >> distCoeffs;
+
+    // print camera parameters
+    std::cout << "cameraMatrix: " << cameraMatrix << std::endl;
+    std::cout << "distCoeffs: " << distCoeffs << std::endl;
+
+    // capture until press ESC or until the end of the video
+    while (input.grab()) {
+        input.retrieve(image);
+        image.copyTo(imageCopy);
+
+        // variables to be filled by detectMarkers and estimatePoseSingleMarkers
+        std::vector<int> ids; // ids of the detected markers
+        std::vector<std::vector<cv::Point2f> > corners, rejected; // corners of the detected markers, rejected candidates
+        std::vector<cv::Vec3d> rvecs, tvecs; // rotation and translation vectors
+
+        // detect markers and estimate pose
+        cv::aruco::detectMarkers(image, dictionary, corners, ids, cv::aruco::DetectorParameters::create(), rejected);
+        if (!ids.empty())
+            cv::aruco::estimatePoseSingleMarkers(corners, length, cameraMatrix, distCoeffs, rvecs, tvecs);
+
+        // draw axis for marker
+        if (!ids.empty()) {
+            cv::aruco::drawDetectedMarkers(imageCopy, corners, ids);
+            auto index = std::find(ids.begin(), ids.end(), markerId);
+            if (index != ids.end()) {
+                long i = std::distance(ids.begin(), index);
+                cv::aruco::drawAxis(imageCopy, cameraMatrix, distCoeffs, rvecs[i], tvecs[i], length * 0.5f);
+                draw_info(imageCopy, axis, tvecs);
+            }
+        }
+
+        // draw image with axis and info
+        cv::imshow("out", imageCopy);
+        char key = (char) cv::waitKey(waitTime);
+        if (key == 27)
+            break;
+    }
+
+    // close video file or capturing device
+    input.release();
+    return 0;
 }
-int main(int argc, char * argv[]) {
-if (argc < 2) {
-	std::cerr << "Usage: " << argv[0] << " <video source no.>" << std::endl;
-	return -1;
-}
 
+void draw_info(const cv::Mat &imageCopy, std::ostringstream &axis, const std::vector<cv::Vec3d> &tvecs) {
+    axis.str(std::string());
+    axis << std::setprecision(4) << "x: " << std::setw(8) << tvecs[0](0);
+    cv::putText(imageCopy, axis.str(),cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 0.6,cv::Scalar(0, 252, 124), 1, CV_AVX);
 
-String nomDict = argv[1];
+    axis.str(std::string());
+    axis << std::setprecision(4) << "y: " << std::setw(8) << tvecs[0](1);
+    cv::putText(imageCopy, axis.str(),cv::Point(10, 50), cv::FONT_HERSHEY_SIMPLEX, 0.6,cv::Scalar(0, 252, 124), 1, CV_AVX);
 
-int idDiccionari;
-
-
-if (nomDict == "DICT_4X4_50") {
-idDiccionari = 0;
-} else if (nomDict == "DICT_4X4_100") {
-idDiccionari = 1;
-} else if (nomDict == "DICT_4X4_250") {
-idDiccionari = 2;
-} else if (nomDict == "DICT_4X4_1000") {
-idDiccionari = 3;
-} else if (nomDict == "DICT_5X5_50") {
-idDiccionari = 4;
-} else if (nomDict == "DICT_5X5_100") {
-idDiccionari = 5;
-} else if (nomDict == "DICT_5X5_250") {
-idDiccionari = 6;
-} else if (nomDict == "DICT_5X5_1000") {
-idDiccionari = 7;
-} else if (nomDict == "DICT_6X6_50") {
-idDiccionari = 8;
-} else if (nomDict == "DICT_6X6_100") {
-idDiccionari = 9;
-} else if (nomDict == "DICT_6X6_250") {
-idDiccionari = 10;
-} else if (nomDict == "DICT_6X6_1000") {
-idDiccionari = 11;
-} else if (nomDict == "DICT_7X7_50") {
-idDiccionari = 12;
-} else if (nomDict == "DICT_7X7_100") {
-idDiccionari = 13;
-} else if (nomDict == "DICT_7X7_250") {
-idDiccionari = 14;
-} else if (nomDict == "DICT_8X8_1000") {
-idDiccionari = 15;
-} else {
-idDiccionari = 16;
-}
-
-int waitTime = 10;
-
-cv::VideoCapture inputVideo;
-
-inputVideo.open(0);
-
-Ptr < aruco::Dictionary > dictionary = aruco::getPredefinedDictionary(idDiccionari);
-
-Mat camMatrix, distCoeffs;
-vector < int > ids;
-vector < vector < Point2f > > corners, rejected;
-vector < Vec3d > rvecs, tvecs;
-
-bool readOk = readCameraParameters("fitxerCalibracio.yaml", camMatrix, distCoeffs);
-if (!readOk) {
-	cerr << "Camera configuration .xml NOT OK" << endl;
-	return 0;
-}
-
-ostringstream vector_to_marker;
-while (inputVideo.grab()) {
-	cv::Mat image, imageCopy;
-	inputVideo.retrieve(image);
-	image.copyTo(imageCopy);
-
-	aruco::detectMarkers(image, dictionary, corners, ids);
-	if (ids.size() > 0) {
-
-		aruco::estimatePoseSingleMarkers(corners, atof(argv[3]), camMatrix, distCoeffs, rvecs, tvecs);
-
-		aruco::drawDetectedMarkers(imageCopy, corners, ids);
-
-		vector < int > ::iterator itId;
-		itId = find(ids.begin(), ids.end(), atoi(argv[2]));
-		if (itId != ids.end()) {
-			int i = distance(ids.begin(), itId);
-
-			cv::drawFrameAxes(imageCopy, camMatrix, distCoeffs, rvecs[i], tvecs[i], 0.1);
-		}
-		vector_to_marker.str(std::string());
-		vector_to_marker << std::setprecision(4) << "X: " << std::setw(8) << tvecs[0](0);
-		cv::putText(imageCopy, vector_to_marker.str(),
-		cv::Point(10, 30), 
-		cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(209, 3, 3), 1, cv::LINE_AA); 
-		vector_to_marker.str(std::string());
-		vector_to_marker.str(std::string());
-		vector_to_marker << std::setprecision(4) << "Y: " << std::setw(8) << tvecs[0](1);
-		cv::putText(imageCopy, vector_to_marker.str(), cv::Point(10, 50), cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(209, 3, 3), 1, cv::LINE_AA); 
-		vector_to_marker.str(std::string());
-		vector_to_marker.str(std::string());
-		vector_to_marker << std::setprecision(4) << "Z: " << std::setw(8) << tvecs[0](2);
-		cv::putText(imageCopy, vector_to_marker.str(),
-		cv::Point(10, 70), cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(209, 3, 3), 1, cv::LINE_AA); 
-		vector_to_marker.str(std::string());
-	}
-
-	cv::imshow("out", imageCopy);
-	char key = (char) cv::waitKey(waitTime);
-	if (key == 27)
-	break;
-	}	
-return 0;
+    axis.str(std::string());
+    axis << std::setprecision(4) << "z: " << std::setw(8) << tvecs[0](2);
+    cv::putText(imageCopy, axis.str(),cv::Point(10, 70), cv::FONT_HERSHEY_SIMPLEX, 0.6,cv::Scalar(0, 252, 124), 1, CV_AVX);
 }
