@@ -60,6 +60,7 @@ int main(int argc, char **argv) {
     // parse command line arguments
     cv::CommandLineParser parser(argc, argv, keys);
 
+    // check for valid input
     if (argc < 3) {
         parser.printMessage();
         return -1;
