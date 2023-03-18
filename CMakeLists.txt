@@ -41,9 +41,4 @@ add_executable(pose_estimation ${pose_estimation_src})
 target_link_libraries(pose_estimation ${OpenCV_LIBRARIES})
 target_compile_options(pose_estimation PRIVATE -O3 -std=c++11)
 
-set(test_src test/src/main.cpp)
-add_executable(test ${test_src})
-target_link_libraries(test ${OpenCV_LIBRARIES})
-target_compile_options(test PRIVATE -O3 -std=c++11)
-
 set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Wextra")
