@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.1)
+set(CMAKE_CXX_COMPILER "g++")
+set (CMAKE_CXX_STANDARD 11)
+
 project(robo-p2)
 
-set (CMAKE_CXX_STANDARD 11)
 find_package(OpenCV REQUIRED)
 
 include_directories(${OPENCV_INCLUDE_DIRS})
@@ -24,6 +26,11 @@ add_executable(draw_cube ${draw_cube_src})
 target_link_libraries(draw_cube ${OpenCV_LIBRARIES})
 target_compile_options(draw_cube PRIVATE -O3 -std=c++11)
 
+set(draw_markers_src draw_markers/src/main.cpp)
+add_executable(draw_markers ${draw_markers_src})
+target_link_libraries(draw_markers ${OpenCV_LIBRARIES})
+target_compile_options(draw_markers PRIVATE -O3 -std=c++11)
+
 set(calibrate_src calibrate/src/main.cpp)
 add_executable(calibrate ${calibrate_src})
 target_link_libraries(calibrate ${OpenCV_LIBRARIES})
@@ -33,3 +40,10 @@ set(pose_estimation_src pose_estimation/src/main.cpp)
 add_executable(pose_estimation ${pose_estimation_src})
 target_link_libraries(pose_estimation ${OpenCV_LIBRARIES})
 target_compile_options(pose_estimation PRIVATE -O3 -std=c++11)
+
+set(test_src test/src/main.cpp)
+add_executable(test ${test_src})
+target_link_libraries(test ${OpenCV_LIBRARIES})
+target_compile_options(test PRIVATE -O3 -std=c++11)
+
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Wextra")
