@@ -69,11 +69,11 @@ int main(int argc, char **argv) {
     std::cout << "id: " << parser.get<int>("id") << std::endl;
     std::cout << "length: " << parser.get<float>("length") << std::endl;
 
-    cv::String dictionaryName = parser.get<cv::String>("name");
-    int markerId = parser.get<int>("id");
-    float length = parser.get<float>("length");
-    int waitTime = 10;
-    int dictionaryId = aruco_dict[dictionaryName];
+    auto dictionaryName = parser.get<cv::String>("name");
+    auto markerId = parser.get<int>("id");
+    auto length = parser.get<float>("length");
+    auto waitTime = 10;
+    auto dictionaryId = aruco_dict[dictionaryName];
 
     if (length <= 0) {
         std::cerr << "Invalid marker length" << std::endl;
@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
     std::ostringstream axis;
 
     // create aruco dictionary
-    cv::Ptr<cv::aruco::Dictionary> dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::PREDEFINED_DICTIONARY_NAME(dictionaryId));
+    auto dictionary = cv::aruco::getPredefinedDictionary(dictionaryId);
 
     // read camera parameters
     cv::FileStorage fs("fitxerCalibracio.yaml", cv::FileStorage::READ);
