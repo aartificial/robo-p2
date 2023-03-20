@@ -3,6 +3,7 @@
 #include "opencv2/highgui.hpp"
 #include <opencv2/core/base.hpp>
 #include <map>
+#include <iostream>
 
 /**
  * @brief Dictionary of aruco markers
@@ -47,7 +48,7 @@ int main(int argc, char* argv[]) {
     cv::CommandLineParser parser(argc, argv, keys);
 
     // check for valid input
-    if (argc < 5) {
+    if (argc < 2) {
         parser.printMessage();
         return -1;
     }
@@ -56,6 +57,7 @@ int main(int argc, char* argv[]) {
     auto dictionaryName = parser.get<cv::String>("name");
     auto dictionaryId = aruco_dict[dictionaryName];
     auto dictionary = cv::aruco::getPredefinedDictionary(dictionaryId);
+    auto wait_time = 10;
 
     cv::VideoCapture input;
     input.open(0);
@@ -75,7 +77,7 @@ int main(int argc, char* argv[]) {
             cv::aruco::drawDetectedMarkers(imageCopy, corners, ids);
 
        cv::imshow("out", imageCopy);
-       char key = (char) cv::waitKey(1);
+       char key = (char) cv::waitKey(wait_time);
        if (key == 27)
            break;
     }
