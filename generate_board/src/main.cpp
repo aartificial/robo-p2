@@ -1,13 +1,13 @@
-#include "opencv2/aruco.hpp"
-#include "opencv2/core/core.hpp"
-#include "opencv2/highgui.hpp"
+#include <opencv2/aruco.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui.hpp>
 #include <opencv2/core/base.hpp>
 #include <map>
 
 /**
  * @brief Dictionary of aruco markers
  */
-std::map<std::string, int> aruco_dict = {
+std::map<std::string, int> arucoDict = {
         {"DICT_4X4_50", 0},
         {"DICT_4X4_100", 1},
         {"DICT_4X4_250", 2},
@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
 
     // Read input parameters
     auto dictionaryName = parser.get<cv::String>("name");
-    auto dictionaryId = aruco_dict[dictionaryName];
+    auto dictionaryId = arucoDict[dictionaryName];
     auto dictionary = cv::aruco::getPredefinedDictionary(dictionaryId);
     auto rows = parser.get<int>("rows");
     auto columns = parser.get<int>("cols");
@@ -70,8 +70,8 @@ int main(int argc, char* argv[]) {
     // Create board
     cv::Size imageSize;
     cv::Mat markerImage;
-    imageSize.width = rows *(pixels+margins) - margins + 2 * margins;
-    imageSize.height = columns *(pixels+margins) - margins + 2 * margins;
+    imageSize.width = rows * (pixels+margins) - margins + 2 * margins;
+    imageSize.height = columns * (pixels+margins) - margins + 2 * margins;
     auto board = cv::aruco::GridBoard::create(columns,rows, float(pixels),float(margins), dictionary);
 
     // Draw board

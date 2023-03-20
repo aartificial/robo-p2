@@ -17,7 +17,7 @@ const cv::String &keys =
  * @param axis
  * @param tvecs
  */
-void draw_info(const cv::Mat &imageCopy, std::ostringstream &axis, const std::vector<cv::Vec3d> &tvecs);
+void drawInfo(const cv::Mat &imageCopy, std::ostringstream &axis, const std::vector<cv::Vec3d> &tvecs);
 
 /**
  * @brief Draw a cube with wireframe
@@ -33,7 +33,7 @@ void drawCubeWireframe(cv::InputOutputArray image, cv::InputArray cameraMatrix,c
 /**
  * @brief Dictionary of aruco markers
  */
-std::map<std::string, int> aruco_dict = {
+std::map<std::string, int> arucoDict = {
         {"DICT_4X4_50", 0},
         {"DICT_4X4_100", 1},
         {"DICT_4X4_250", 2},
@@ -76,8 +76,8 @@ int main(int argc, char **argv) {
     auto dictionaryName = parser.get<cv::String>("name");
     auto length = parser.get<float>("length");
     auto markerId = parser.get<int>("id");
-    auto dictionaryId = aruco_dict[dictionaryName];
-    int wait_time = 10;
+    auto dictionaryId = arucoDict[dictionaryName];
+    int waitTime = 10;
 
     if (length <= 0) {
         std::cerr << "Invalid marker length" << std::endl;
@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
     }
 
     cv::Mat image, imageCopy;
-    cv::Mat camera_matrix, dist_coeffs;
+    cv::Mat cameraMatrix, distCoeffs;
     std::ostringstream axis;
 
     cv::Ptr<cv::aruco::Dictionary> dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::PREDEFINED_DICTIONARY_NAME(dictionaryId));
@@ -103,11 +103,11 @@ int main(int argc, char **argv) {
     // Read calibration file
     cv::FileStorage fs("fitxerCalibracio.yaml", cv::FileStorage::READ);
 
-    fs["camera_matrix"] >> camera_matrix;
-    fs["distortion_coefficients"] >> dist_coeffs;
+    fs["cameraMatrix"] >> cameraMatrix;
+    fs["distortion_coefficients"] >> distCoeffs;
 
-    std::cout << "camera_matrix\n" << camera_matrix << std::endl;
-    std::cout << "\ndist coeffs\n" << dist_coeffs << std::endl;
+    std::cout << "cameraMatrix\n" << cameraMatrix << std::endl;
+    std::cout << "\ndist_coeffs\n" << distCoeffs << std::endl;
 
     while (input.grab()) {
         input.retrieve(image);
@@ -122,20 +122,20 @@ int main(int argc, char **argv) {
         if (ids.size() > 0) {
             cv::aruco::drawDetectedMarkers(imageCopy, corners, ids);
             std::vector<cv::Vec3d> rvecs, tvecs;
-            cv::aruco::estimatePoseSingleMarkers(corners, length, camera_matrix, dist_coeffs,rvecs, tvecs);
+            cv::aruco::estimatePoseSingleMarkers(corners, length, cameraMatrix, distCoeffs, rvecs, tvecs);
 
             // draw axis for each marker
             std::vector < int > ::iterator itId;
             auto index = std::find(ids.begin(), ids.end(), markerId);
             if (index != ids.end()) {
                 long i = distance(ids.begin(), itId);
-                drawCubeWireframe(imageCopy, camera_matrix, dist_coeffs, rvecs[i], tvecs[i], length);
-                draw_info(imageCopy, axis, tvecs);
+                drawCubeWireframe(imageCopy, cameraMatrix, distCoeffs, rvecs[i], tvecs[i], length);
+                drawInfo(imageCopy, axis, tvecs);
             }
         }
 
         cv::imshow("out", imageCopy);
-        char key = (char)cv::waitKey(wait_time);
+        char key = (char)cv::waitKey(waitTime);
         if (key == 27)
             break;
     }
@@ -144,7 +144,7 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-void drawCubeWireframe(cv::InputOutputArray image, cv::InputArray cameraMatrix,cv::InputArray distCoeffs, cv::InputArray rvec, cv::InputArray tvec,float l) {
+void drawCubeWireframe(cv::InputOutputArray image, cv::InputArray cameraMatrix,cv::InputArray distCoeffs, cv::InputArray rvec, cv::InputArray tvec, float l) {
     // cube half-length
     auto halfLength = (float) (l / 2.0);
 
@@ -179,7 +179,7 @@ void drawCubeWireframe(cv::InputOutputArray image, cv::InputArray cameraMatrix,c
 }
 
 
-void draw_info(const cv::Mat &imageCopy, std::ostringstream &axis, const std::vector<cv::Vec3d> &tvecs) {
+void drawInfo(const cv::Mat &imageCopy, std::ostringstream &axis, const std::vector<cv::Vec3d> &tvecs) {
     axis.str(std::string());
     axis << std::setprecision(4) << "x: " << std::setw(8) << tvecs[0](0);
     cv::putText(imageCopy, axis.str(),cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 0.6,cv::Scalar(0, 252, 124), 1, CV_AVX);

@@ -3,12 +3,11 @@
 #include "opencv2/highgui.hpp"
 #include <opencv2/core/base.hpp>
 #include <map>
-#include <iostream>
 
 /**
  * @brief Dictionary of aruco markers
  */
-std::map<std::string, int> aruco_dict = {
+std::map<std::string, int> arucoDict = {
     {"DICT_4X4_50", 0},
     {"DICT_4X4_100", 1},
     {"DICT_4X4_250", 2},
@@ -55,9 +54,9 @@ int main(int argc, char* argv[]) {
 
     // Read input parameters
     auto dictionaryName = parser.get<cv::String>("name");
-    auto dictionaryId = aruco_dict[dictionaryName];
+    auto dictionaryId = arucoDict[dictionaryName];
     auto dictionary = cv::aruco::getPredefinedDictionary(dictionaryId);
-    auto wait_time = 10;
+    auto waitTime = 10;
 
     cv::VideoCapture input;
     input.open(0);
@@ -77,9 +76,8 @@ int main(int argc, char* argv[]) {
             cv::aruco::drawDetectedMarkers(imageCopy, corners, ids);
 
        cv::imshow("out", imageCopy);
-       char key = (char) cv::waitKey(wait_time);
+       char key = (char) cv::waitKey(waitTime);
        if (key == 27)
            break;
     }
-   
 }

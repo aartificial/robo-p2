@@ -19,7 +19,7 @@ const cv::String &keys =
 /**
  * @brief Dictionary of aruco markers
  */
-std::map<std::string, int> aruco_dict = {
+std::map<std::string, int> arucoDict = {
         {"DICT_4X4_50", 0},
         {"DICT_4X4_100", 1},
         {"DICT_4X4_250", 2},
@@ -49,7 +49,7 @@ std::map<std::string, int> aruco_dict = {
  * @param axis
  * @param tvecs
  */
-void draw_info(const cv::Mat &imageCopy, std::ostringstream &axis, const std::vector<cv::Vec3d> &tvecs);
+void drawInfo(const cv::Mat &imageCopy, std::ostringstream &axis, const std::vector<cv::Vec3d> &tvecs);
 
 /**
  * @brief Main function
@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
     auto markerId = parser.get<int>("id");
     auto length = parser.get<float>("length");
     auto waitTime = 10;
-    auto dictionaryId = aruco_dict[dictionaryName];
+    auto dictionaryId = arucoDict[dictionaryName];
 
     if (length <= 0) {
         std::cerr << "Invalid marker length" << std::endl;
@@ -128,7 +128,7 @@ int main(int argc, char **argv) {
             if (index != ids.end()) {
                 long i = std::distance(ids.begin(), index);
                 cv::aruco::drawAxis(imageCopy, cameraMatrix, distCoeffs, rvecs[i], tvecs[i], length * 0.5f);
-                draw_info(imageCopy, axis, tvecs);
+                drawInfo(imageCopy, axis, tvecs);
             }
         }
 
@@ -144,7 +144,7 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-void draw_info(const cv::Mat &imageCopy, std::ostringstream &axis, const std::vector<cv::Vec3d> &tvecs) {
+void drawInfo(const cv::Mat &imageCopy, std::ostringstream &axis, const std::vector<cv::Vec3d> &tvecs) {
     axis.str(std::string());
     axis << std::setprecision(4) << "x: " << std::setw(8) << tvecs[0](0);
     cv::putText(imageCopy, axis.str(),cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 0.6,cv::Scalar(0, 252, 124), 1, CV_AVX);

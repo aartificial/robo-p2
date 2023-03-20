@@ -7,7 +7,7 @@
 /**
  * @brief Dictionary of aruco markers
  */
-std::map<std::string, int> aruco_dict = {
+std::map<std::string, int> arucoDict = {
     {"DICT_4X4_50", 0},
     {"DICT_4X4_100", 1},
     {"DICT_4X4_250", 2},
@@ -54,7 +54,7 @@ int main(int argc, char* argv[]) {
     }
 
     auto dictionaryName = parser.get<cv::String>("name");
-    auto dictionaryId = aruco_dict[dictionaryName];
+    auto dictionaryId = arucoDict[dictionaryName];
     auto dictionary = cv::aruco::getPredefinedDictionary(dictionaryId);
     auto markerSize = parser.get<int>("size");
     auto markerId = parser.get<int>("id");
